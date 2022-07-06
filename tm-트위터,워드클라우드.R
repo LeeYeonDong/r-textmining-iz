@@ -128,8 +128,7 @@ izone_ko.수식언 <- izone_ko.수식언 %>% as.data.frame()
 izone_ko <- bind_rows(izone_ko.명사,izone_ko.용언,izone_ko.수식언)
 
 
-#### 최다 빈도 단어 Top30을 뽑습니다
-시각화에 적합한 수준으로 데이터를 추려봅니다
+#### 최다 빈도 단어 Top30을 뽑습니다 시각화에 적합한 수준으로 데이터를 추려봅니다
 
 izone_ko_count <- table(izone_ko)                       ## 객체별 빈도를 셉니다
 izone_ko_count <- sort(izone_ko_count, decreasing = TRUE)         ##내림차순 정렬 합니다

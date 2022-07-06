@@ -80,7 +80,7 @@ izone_ko_연관_용언 <- izone_ko_연관 %>%
 
 izone_ko_연관_수식언 <- izone_ko_연관 %>%  
   select(6, 1) %>%                        ## 6열(수식언)과 1열 추출
-  na.omit() %
+  na.omit() 
 
 
 #### 품사별 글자수를 "단어"로 통합
