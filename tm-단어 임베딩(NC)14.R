@@ -22,7 +22,7 @@ library(keras)
 install_keras()
 library(tensorflow)
 install_tensorflow()
-sess= tf$Session()
+sess = tf$Session()
 
 library(keras)
 library(tensorflow)
@@ -246,6 +246,11 @@ history_NC <- model_NC %>% keras::fit(
   # check train results againts test data
   validation_split = 0.2
 )
+
+#  loss : 훈련 손실값, acc : 훈련 정확도, val_loss : 검증 손실값, val_acc : 검증 정확도
+# acc는 accuracy '정확도'라는 뜻으로 값이 1에 가깝고 높을 수록 좋은 모델이라는 것을 뜻합니다.
+# loss는 결과 값과의 차이를 의미하므로 작을 수록 좋고 0.0000000....에 수렴할수록 좋은 모델이라는 것을 뜻합니다.
+
 
 history_NC %>% plot()
 

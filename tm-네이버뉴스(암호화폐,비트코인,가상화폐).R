@@ -30,7 +30,7 @@ library(tidytext)
 
 
 # 암호화폐
-암호df <- read_csv(file = "D:/대학원/논문/텍스트마이닝상담/암호비트가상/암호_df_com_본문제외.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
+암호df <- read_csv(file = "D:/대학원/논문/커뮤니케이션학과/암호비트가상/암호_df_com_본문제외.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
 
 암호df$날짜_암호 <- 암호df$날짜_암호 %>% as.character()
 
@@ -47,7 +47,7 @@ names(암호df) <- c("언론사","제목","날짜","링크","구분")
 
 
 # 비트코인
-비트df <- read_csv(file = "D:/대학원/논문/텍스트마이닝상담/암호비트가상/비트_df_com_본문제외.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
+비트df <- read_csv(file = "D:/대학원/논문/커뮤니케이션학과/암호비트가상/비트_df_com_본문제외.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
 
 비트df$날짜_비트 <- 비트df$날짜_비트 %>% as.character()
 
@@ -64,7 +64,7 @@ names(비트df) <- c("언론사","제목","날짜","링크","구분")
 
 
 # 가상화폐
-가상df <- read_csv(file = "D:/대학원/논문/텍스트마이닝상담/암호비트가상/가상_df_com_본문제외.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
+가상df <- read_csv(file = "D:/대학원/논문/커뮤니케이션학과/암호비트가상/가상_df_com_본문제외.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
 
 가상df$날짜_가상 <- 가상df$날짜_가상 %>% as.character()
 
