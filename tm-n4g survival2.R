@@ -84,8 +84,8 @@ n4g$종류 <- n4g$종류 %>% as.integer()
 
 n4g$id <- c(1:length(n4g$제목))
 
-n4g$관심도 %>% quantile(probs = seq(0,1, by=0.05))
-n4g$관심도over <- ifelse(n4g$관심도 > 150,1,0)# quantile에 따라 구분구간 조정 65%
+n4g$관심도 %>% quantile(probs = seq(0,1, by = 0.025))
+n4g$관심도over <- ifelse(n4g$관심도 > 240,1,0)# quantile에 따라 구분구간 조정 65%
 
 # 기사 영향력 생존 측정
 n4g$생존기간 <- n4g$날짜 - n4g$댓글날짜
@@ -105,7 +105,11 @@ n4g <- n4g %>% na.omit()
 # 이상치 제거
 n4g$생존기간 <- n4g$생존기간 + 1
 n4g$생존기간 %>% boxplot()
-n4g <- n4g[-which(n4g$생존기간 > summary(n4g$생존기간)[5] + 3*IQR(n4g$생존기간)),]
+# n4g <- n4g[-which(n4g$생존기간 > summary(n4g$생존기간)[5] + 3*IQR(n4g$생존기간)),]
+n4g$생존기간 %>% sort(decreasing = TRUE)
+n4g <- n4g %>% 
+  filter(n4g$생존기간 < 60)
+
 
 # data:stanford2과 비교
 # stan$id -> n4g$id / stan$time -> n4g$(게시글 시점-마지막 댓글 게시 시점점) / stan$mismatch -> n4g$이름 / stan$age -> n4g$날짜 / stan$status -> n4g$관심도 / 
@@ -131,6 +135,19 @@ ggforest(n4g_cox1)
 
 n4g_cox1 %>% summary()
 
+
+n4g_new <- n4g %>% 
+  filter(이름 %in% c("ds","lol","lou"))
+n4g_new$이름 <- n4g_new$이름 %>% as.character()
+n4g_new$이름 <- n4g_new$이름 %>% as.factor()
+n4g_new$이름 %>% str()
+
+n4g_cox2 <- coxph(
+  Surv(n4g_new$생존기간, n4g_new$관심도over) ~ 이름, data = n4g_new)
+
+ggforest(n4g_cox2)
+
+n4g_cox2 %>% summary()
 
 # n4g_cox2 <- coxph(
 #   Surv(생존기간, 관심도over) ~ 이름 + 날짜, data = n4g)
@@ -179,6 +196,7 @@ n4g_cox2 %>% cox.zph()
 # we can see a plot of these as well..(one plot for each parameter) these are plots of "changes in b over time", if we let "b" vary over time recall,... if "b" varies over time, this means that there is NOT PH! the effect is not constant over time... it varies!
 # pay less attention to the extremes, as line is sensitive here
 ggcoxzph(cox.zph(n4g_cox1))
+ggcoxzph(cox.zph(n4g_cox2))
 
 plot(cox.zph(n4g_cox1)[1]) 
 abline(h=0, col=2)
