@@ -1,29 +1,35 @@
-R_LIBS_SITE="C:\\Program Files\\R\\R-4.2.1\\library"
-.libPaths("C:/Program Files/R/R-4.2.1/library")
-.libPaths("C:/myRproject")
+R_LIBS_SITE="C:\\Program Files\\R\\R-4.2.2\\library"
+.libPaths("C:/Program Files/R/R-4.2.2/library")
 getwd()
 
 .libPaths()
 
 install.packages("reticulate")
+
+
+
 install.packages("devtools")
 install.packages("tidyverse")
+install.packages("Rcpp")
+library(Rcpp)
 
 reticulate::conda_version()
 sessionInfo()
+
+devtools::install_github("rstudio/keras")
+devtools::install_github("rstudio/tensorflow")
+
+library(keras)
+install_keras()
+library(tensorflow)
+install_tensorflow()
+sess <- tf$Session()
 
 library(tensorflow)
 use_condaenv("tf")
 sess <- tf$Session()
 
-devtools::install_github("rstudio/keras")
-devtools::install_github("rstudio/tensorflow")
-library(keras)
-install_keras()
-library(tensorflow)
-install_tensorflow()
-sess = tf$Session()
-
+library(reticulate)
 library(keras)
 library(tensorflow)
 # install.packages("tokenizers")
@@ -63,6 +69,8 @@ library(tidytext)
 library(umap)
 library(gridExtra)
 
+devtools::install_github("mkearney/rmd2jupyter")
+library(rmd2jupyter)
 
 ##########
 # 2013년 구글에서 개발한 Word2Vec이라는 방법론이 있습니다. 이름 그대로 단어(Word)를 벡터(Vector)로 바꿔주는 방법입니다. 이를 임베딩(Embedding). GloVe, Fasttext 같은 다른 방법론과의 비교 단어를 벡터화할 때 단어의 문맥적 의미를 보존

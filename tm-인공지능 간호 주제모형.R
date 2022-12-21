@@ -15,6 +15,7 @@ useNIADic()
 
 # package
 library(tidyverse)
+library(dplyr)
 library(ggplot2)
 library(tm)
 library(NLP)
@@ -31,6 +32,7 @@ library(ggthemes)
 library(widyr)
 library(ggraph)
 library(tidygraph)
+library(tidytext)
 
 # data
 인공간호 <- read_csv(file = "D:/대학원/논문/인공지능 간호/인공지능간호.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
@@ -95,7 +97,7 @@ for (i in 1:n){
   간호_data_set[[i]] <- 간호_tb[[i]]  %>% 
     melt() %>% # 식별자id, 측정 변수variable, 측정치value 형태로 데이터를 재구성하는 함수
     as_tibble() %>% 
-    select(5,1,2,3)
+    dplyr::select(5,1,2,3)
   
   names(간호_data_set[[i]]) <- c("id","키워드","일자","word")
   
@@ -327,6 +329,8 @@ for (i in 1:n){
   글자수 <- append(글자수,간호_영어[[i]]$글자수)
 }
 
+간호_한글[[1]] %>% view()
+
 간호_before_dtm <- tibble(L1,단어,글자수)
 간호_dtm <- 간호_before_dtm %>% cast_dtm(document = L1, term = 단어, value = 글자수)
 
@@ -364,7 +368,9 @@ sn <- 5
 
 
 ## 주제모형 산출
-간호_lda <- LDA(간호_dtm, k = sn, method = "Gibbs", control=list(alpha = 1, delta = 0.1, seed = 1029))
+간호_lda <- LDA(간호_dtm, k = 5, method = "Gibbs", control=list(alpha = 1, delta = 0.1, seed = 1029))
+
+간호_dtm %>% as.matrix()
 
 terms(간호_lda, 10)
 

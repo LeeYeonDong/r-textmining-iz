@@ -510,3 +510,12 @@ ggplot(aes(x = line_number,y= sentiment,)) +
 영상제목[5]
 
 
+# 감성분석(nrc)
+ytb_token %>%
+  head(100) %>%
+  arrange(desc(line_number)) %>%
+  inner_join(get_sentiments("nrc")) %>% 
+  group_by(제목,line_number,sentiment) %>%
+  tally() %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0)
+  
