@@ -32,7 +32,9 @@ n4g_mc$이름 <- c("mc")
 # 데이터 프레임 병합
 n4g <- bind_rows(n4g_ds,n4g_lol,n4g_lou,n4g_mc)
 n4g %>% dim()
-n4g <- n4g %>% na.omit()
+n4g %>% view()
+
+# n4g <- n4g %>% na.omit()
 n4g %>% dim()
 
 # 데이터 확인
@@ -51,9 +53,11 @@ n4g$날짜 <- str_match(n4g$날짜,"\\d+")
 n4g$날짜 <- n4g$날짜 %>% as.integer()
 # n4g$날짜 <- max(n4g$날짜) - n4g$날짜 # 첫번째 발매일에 맞추어서 보정 필요
 
-n4g$댓글날짜 <- ifelse(is.na(n4g$댓글날짜), 0, n4g$댓글날짜) 
 n4g$댓글날짜 <- str_match(n4g$댓글날짜,"\\d+")
-n4g$댓글날짜 <- n4g$댓글날짜 %>% as.integer()
+n4g$댓글날짜 <- ifelse(is.na(n4g$댓글날짜), "-Inf", n4g$댓글날짜) # 결측값을 "Inf"로
+n4g$댓글날짜 <- n4g$댓글날짜 %>% as.numeric()
+
+
 # n4g$댓글날짜 <- max(n4g$댓글날짜) - n4g$댓글날짜
 
 n4g$날짜 %>% hist()
@@ -85,18 +89,20 @@ n4g$종류 <- n4g$종류 %>% as.integer()
 n4g$id <- c(1:length(n4g$제목))
 
 n4g$관심도 %>% quantile(probs = seq(0,1, by = 0.025))
-n4g$관심도over <- ifelse(n4g$관심도 > 240,1,0)# quantile에 따라 구분구간 조정 65%
+n4g$관심도over <- ifelse(n4g$관심도 > 240,1,0) # quantile에 따라 구분구간 조정 85%
+
+
 
 # 기사 영향력 생존 측정
 n4g$생존기간 <- n4g$날짜 - n4g$댓글날짜
 n4g$생존기간 %>% quantile()
 
-n4g %>% 
+(n4g %>% 
   filter(생존기간 < 0) %>% 
-  select(링크) %>% length()
+  select(링크) %>% dim())[1]
 
-n4g %>% 
-  filter(생존기간 < 0) %>% length()
+(n4g %>% 
+  filter(생존기간 < 0) %>% dim())[1]
 
 # 결측치 제거
 n4g$생존기간 <- ifelse(n4g$생존기간 < 0, NA, n4g$생존기간) 
@@ -209,3 +215,17 @@ abline(h=0, col=2)
 # zero on the plot means there is no change all right
 # case[1] : y=0(red line)이 confidense interval에 상당히 포함 되어있지 않으므로 Hazard ratio가 변한다고 볼수 있다
 # case[2] : y=0(red line)이 confidense interval에 상당히 포함 되어있으므로 Hazard ratio가 변하지 않는다고 볼 수 있다
+
+# Multiple imputation for interval censored data
+devtools::install_github('cran/MIICD')
+library(MIICD)
+
+bcos %>% view()
+bcos %>% class()
+bcos$treatment %>% class()
+bcos$right %>% class()
+
+n4g_cox1 <- coxph(
+  Surv(생존기간, 관심도over) ~ 이름, data = n4g)
+
+MIICD.coxph(formula = ~ treatment, k = 5, m = 5, data = bcos, verbose = FALSE) 

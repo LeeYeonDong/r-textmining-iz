@@ -172,7 +172,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 # 90년대
 (간호_token %>% filter(일자 %in% c(1990:1999)) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as.data.frame() %>% 
   as_tibble() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -186,7 +186,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 # 00년대
 (간호_token %>% filter(일자 %in% c(2000:2009)) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as.data.frame() %>% 
   as_tibble() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -199,7 +199,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 10년대 초중반
 (간호_token %>% filter(일자 %in% c(2010:2015)) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as.data.frame() %>%as_tibble() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -213,7 +213,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 2016
 (간호_token %>% filter(일자 == 2016) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as_tibble() %>% as.data.frame() %>%
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -226,7 +226,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 2017
 (간호_token %>% filter(일자 == 2017) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as_tibble() %>% as.data.frame() %>%
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -239,7 +239,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 2018
 (간호_token %>% filter(일자 == 2018) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as_tibble() %>% as.data.frame() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -252,7 +252,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 2019
 (간호_token %>% filter(일자 == 2019) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as_tibble() %>% as.data.frame() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -265,7 +265,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 2020
 (간호_token %>% filter(일자 == 2020) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as_tibble() %>% as.data.frame() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -278,7 +278,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 2021
 (간호_token %>% filter(일자 == 2021) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as_tibble() %>% as.data.frame() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +
@@ -291,7 +291,7 @@ token_count30df %>% wordcloud2(minRotation=0, maxRotation=0, color = 'black')
 
 # 2022
 (간호_token %>% filter(일자 == 2022) %>% select(word) %>% table() %>% sort(decreasing = TRUE))[1:30] %>% as_tibble() %>% as.data.frame() %>% 
-  ggplot(aes(x=n, y=reorder(word,n), fill = n)) + 
+  ggplot(aes(x=n, y=reorder(word,Freq), fill = Freq)) + 
   geom_col() + 
   theme(axis.text.x=element_text(angle=0, hjust=1)) +
   theme(axis.text.y=element_text(angle=0, hjust=1, size = 20)) +

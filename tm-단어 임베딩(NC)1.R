@@ -59,7 +59,7 @@ library(gridExtra)
 # 2013년 구글에서 개발한 Word2Vec이라는 방법론이 있습니다. 이름 그대로 단어(Word)를 벡터(Vector)로 바꿔주는 방법입니다. 이를 임베딩(Embedding). GloVe, Fasttext 같은 다른 방법론과의 비교 단어를 벡터화할 때 단어의 문맥적 의미를 보존
 
 # data 준비
-뉴스_sports.news_NC <- read_csv(file = "C:/대학원/논문/소논문/뉴스_sports.news_NC.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
+뉴스_sports.news_NC <- read_csv(file = "D:/대학원/논문/소논문/뉴스_sports.news_NC.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
 
 names(뉴스_sports.news_NC) <- c("언론사_NC","제목_NC","날짜_NC","링크_NC","좋아_NC","훈훈_NC","슬퍼_NC","화나_NC","후속_NC")
 

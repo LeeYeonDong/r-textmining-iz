@@ -1,33 +1,35 @@
-R_LIBS_SITE="C:\\Program Files\\R\\R-4.2.2\\library"
-.libPaths("C:/Program Files/R/R-4.2.2/library")
-getwd()
-
 .libPaths()
 
 install.packages("reticulate")
-
-
-
 install.packages("devtools")
 install.packages("tidyverse")
 install.packages("Rcpp")
 library(Rcpp)
+library(reticulate)
 
 reticulate::conda_version()
 sessionInfo()
 
-devtools::install_github("rstudio/keras")
-devtools::install_github("rstudio/tensorflow")
+Sys.setenv(JAVA_HOME='C:/Program Files/Java/jdk-18.0.1.1')
+Sys.setenv(TENSORFLOW_PYTHON='C:/Users/hanmi/AppData/Local/Programs/Python/Python310')
+Sys.setenv(TENSORFLOW_PYTHON="/usr/bin/python")
 
+
+reticulate::miniconda_uninstall() # start with a blank slate
+reticulate::install_miniconda()
+
+install.packages("keras")# 버전 확인 2.9.0 권장
 library(keras)
-install_keras()
 library(tensorflow)
+install_keras()
 install_tensorflow()
+use_condaenv('tf')
 sess <- tf$Session()
 
-library(tensorflow)
-use_condaenv("tf")
-sess <- tf$Session()
+py_config()
+
+trainy <- c(0,0,0,0,0,1,1,1,1,1)
+trainLabels <- to_categorical(trainy)
 
 library(reticulate)
 library(keras)

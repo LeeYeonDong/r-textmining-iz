@@ -15,7 +15,9 @@ library(remotes)
 install_github("EmilHvitfeldt/textdata")
 
 ## data
-df_ytb1 <- read_csv(file = "D:/대학원/논문/커뮤니케이션학과/유튜브.csv", col_names = TRUE, locale=locale('ko',encoding='euc-kr'))
+df_ytb1 <- read_csv(file = "D:/대학원/논문/커뮤니케이션학과/유튜브.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
+
+df_ytb1 %>% head(100)
 
 # df_ytb1 <- df_ytb_com
 df_ytb1$id <- c(1:nrow(df_ytb1))
@@ -82,47 +84,61 @@ a <- gsub("covid19","covid",a)
 
 ytb_token$word <- a
 
+install_github("EmilHvitfeldt/textdata")
+get_sentiments("nrc") %>% select("sentiment") %>% unique()
 # 감성분석(nrc)
 # beta - topic별 단어 분포
-# nrc_df <- ytb_token %>%
-#   head(100) %>%
-#   arrange(-desc(line_number)) %>%
-#   inner_join(get_sentiments("nrc")) %>% 
-#   group_by(line_number,sentiment) %>%
-#   tally() %>%
-#   pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
-#   as.data.frame() %>% 
-#   select(-line_number) %>% t() %>% as.data.frame()
-# 
-# colnames(nrc_df) <- nrc_df["word",] %>% as.character()
-# nrc_df <- nrc_df[-1,]
-# nrc_df
+ytb_token$word %>% table() %>% wordcloud2()
 
-
-
+unique(ytb_token$제목)
 nrc_df <- ytb_token %>%
-  # head(1000) %>%
+  filter(제목 == unique(ytb_token$제목)[1]) %>% 
+  select("line_number","제목", "댓글", "word") %>% 
   arrange(-desc(line_number)) %>%
-  inner_join(get_sentiments("nrc")) %>% 
-  group_by(line_number,word) %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(line_number,sentiment) %>%
   tally() %>%
-  pivot_wider(names_from = word, values_from = n, values_fill = 0) %>% 
-    as.data.frame() %>%
-    t() %>% as.data.frame()
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  as.data.frame() %>%
+  select(-line_number) %>% t() %>% as.data.frame()
+
+nrc_df %>% view()
 
 colnames(nrc_df) <- nrc_df["word",] %>% as.character()
-nrc_df <- nrc_df[-c(1,2),]
+nrc_df <- nrc_df[-1,]
 nrc_df
 
-nrc_df <- ytb_token %>%
-  # head(1000) %>%
+# nrc_df <- ytb_token %>%
+#   # head(1000) %>%
+#   arrange(-desc(line_number)) %>%
+#   inner_join(get_sentiments("nrc")) %>% 
+#   group_by(line_number,word) %>%
+#   tally() %>%
+#   pivot_wider(names_from = word, values_from = n, values_fill = 0) %>% 
+#     as.data.frame() %>%
+#     t() %>% as.data.frame()
+# 
+# colnames(nrc_df) <- nrc_df["word",] %>% as.character()
+# nrc_df <- nrc_df[-c(1,2),]
+# nrc_df
+# 
+# nrc_df <- ytb_token %>%
+#   # head(1000) %>%
+#   arrange(-desc(line_number)) %>%
+#   inner_join(get_sentiments("nrc")) %>% 
+#   group_by(line_number,word) %>%
+#   tally() 
+
+nrc_lda <- ytb_token %>%
+  filter(제목 == unique(ytb_token$제목)[1]) %>% 
+  select("line_number","제목", "댓글", "word") %>% 
   arrange(-desc(line_number)) %>%
-  inner_join(get_sentiments("nrc")) %>% 
+  # inner_join(get_sentiments("nrc")) %>%
   group_by(line_number,word) %>%
-  tally() 
+  tally() %>% 
+  cast_dtm(document = line_number, term = word, value = n) %>% 
+  LDA(k = 2, method = "Gibbs", control=list(alpha = 1, delta = 0.1, seed = 1029))
 
-nrc_dtm <- nrc_df %>% cast_dtm(document = line_number, term = word, value = n)
+nrc_lda %>% str()
 
-nrc_lda <- LDA(nrc_dtm , k = 8, method = "Gibbs", control=list(alpha = 1, delta = 0.1, seed = 1029))
-
-terms(nrc_lda, 10)
+terms(nrc_lda, 20)
