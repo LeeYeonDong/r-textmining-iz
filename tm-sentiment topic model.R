@@ -96,8 +96,9 @@ nrc_df <- ytb_token %>%
   select("line_number","제목", "댓글", "word") %>% 
   arrange(-desc(line_number)) %>%
   inner_join(get_sentiments("nrc")) %>%
-  group_by(line_number,sentiment) %>%
-  tally() %>%
+#  group_by(line_number,sentiment) %>%
+#  tally() %>%
+  count(line_number,sentiment) %>% 
   pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
   as.data.frame() %>%
   select(-line_number) %>% t() %>% as.data.frame()

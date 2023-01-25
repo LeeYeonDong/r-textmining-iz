@@ -329,7 +329,7 @@ for (i in 1:n){
   글자수 <- append(글자수,간호_영어[[i]]$글자수)
 }
 
-간호_한글[[1]] %>% view()
+# 간호_한글[[1]] %>% view()
 
 간호_before_dtm <- tibble(L1,단어,글자수)
 간호_dtm <- 간호_before_dtm %>% cast_dtm(document = L1, term = 단어, value = 글자수)
@@ -369,6 +369,8 @@ sn <- 5
 
 ## 주제모형 산출
 간호_lda <- LDA(간호_dtm, k = 5, method = "Gibbs", control=list(alpha = 1, delta = 0.1, seed = 1029))
+# Alpha and Beta Hyperparameters – alpha represents document-topic density and Beta represents topic-word density. Higher the value of alpha, documents are composed of more topics and lower the value of alpha, documents contain fewer topics. On the other hand, higher the beta, topics are composed of a large number of words in the corpus, and with the lower value of beta, they are composed of few words.
+
 
 간호_dtm %>% as.matrix()
 
@@ -391,13 +393,13 @@ terms(간호_lda, 10)
   scale_x_reordered() +
   labs(x="", y="")
 
-##문서를 토픽별로 분류하기
-간호_topic <- tidy(간호_lda, matrix="gamma")
+## 문서를 토픽별로 분류하기
+간호_topic <- tidy(간호_lda, matrix = "gamma")
 
 ##문서별로 확률이 가장 높은 토픽 추출
 간호_class <- 간호_topic %>% 
   group_by(document) %>% 
-  slice_max(gamma, n=1)
+  slice_max(gamma, n = 1)
 
 ##원문에 확률이 가장 높은 번호 부여
 #integer로 변환
@@ -410,19 +412,15 @@ news_간호 <- 간호 %>% mutate(id = row_number())
 간호_class_topic %>% select(id, topic)
 
 ## 토픽별 문서 수 살펴보기
-간호_class_topic %>% count(topic)
-
+간호_class_topic_count <- 간호_class_topic %>% count(topic)
 ## 결측치 제거
 간호_class_topic <- 간호_class_topic %>% na.omit()
 
 ## 토픽별 주요 단어 목록 만들기
 간호_terms <- 간호_top_terms %>% 
   group_by(topic) %>%
-  slice_max(beta, n=5, with_ties = FALSE) %>% 
+  slice_max(beta, n = 5, with_ties = FALSE) %>% 
   summarise(term = paste(term, collapse = ", "))
-  
-## 토픽별 문서 빈도 구하기
-간호_class_topic_count <- 간호_class_topic %>% count(topic)
 
 ## 문서 빈도에 주요단어 결합
 간호_topic_count_word <- 간호_class_topic_count %>% 
