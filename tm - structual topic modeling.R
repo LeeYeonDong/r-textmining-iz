@@ -19,7 +19,7 @@ library(ldatuning)
 # Load data from csv file
 blogs <- read_csv(file = "D:/대학원/논문/Topic Modeling/blogs.csv", col_names = TRUE, locale = locale('ko',encoding='utf-8'))
 
-blogs %>% head()
+blogs %>% head(100) %>% view()
 blogs %>% str()
 blogs <- blogs %>% na.omit()
 
@@ -38,7 +38,7 @@ news_processed <- textProcessor(blogs$documents, metadata = blogs,
                            removenumbers = TRUE, # Remove numbers
                            removepunctuation = TRUE, # Remove punctuation
                            stem = TRUE, # Stemming
-                           wordLengths = c(3,Inf), # remove less than length 3
+                           wordLengths = c(3,Inf), # remove less than length 3, 한글이면 2
                            sparselevel = 1, #*
                            language = "en", #*
                            verbose = TRUE, #*
