@@ -120,7 +120,7 @@ library(LDAvis)
 # using serVis
 topicmodels2LDAvis <- function(x){
   post <- topicmodels::posterior(x)
-  if (ncol(post$topics) < 3) stop("The model must contain > 2 topics")
+  if (ncol(post$topics) < 3) stop("The model must contain >= 3 topics")
   mat <- x@wordassignments
   LDAvis::createJSON(
     phi = post$terms, 
@@ -136,6 +136,7 @@ raw1_lda %>% glimpse()
 # posterior(raw1_lda)$topics = posterior(raw1_lda)[["topics"]]
 serVis(topicmodels2LDAvis(raw1_lda))
 raw1_lda %>% topicmodels2LDAvis() %>% serVis()
+
 
 # ############
 # topicmodels_json_ldavis <- function(fitted, corpus, doc_term){
