@@ -5,7 +5,8 @@ library(stm)
 library(dplyr)
 library(tidytext)
 library(furrr) # try to make it faster
-plan(multicore)
+plan(multicore) # parallel processing within a single machine
+# plan(multiprocess) #parallel processing across multiple machines
 library(tm) # Framework for text mining
 library(tidyverse) # Data preparation and pipes %>%
 library(ggplot2) # For plotting word frequencies

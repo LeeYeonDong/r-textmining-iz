@@ -1,5 +1,18 @@
-# DocumentTermMatrix
+library(KoNLP)
+library(tidyverse)
+
+library(ggplot2)
 library(tm)
+library(qdap)
+library(corpus)
+library(wordcloud2)
+library(stringr)
+library(rJava)
+library(tidytext)
+library(dplyr)
+library(reshape) 
+
+# DocumentTermMatrix
 raw1_before_dtm <- raw1_token_df %>% 
                     group_by(id) %>% 
                     count(단어, sort = TRUE)
