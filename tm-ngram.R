@@ -1,5 +1,4 @@
 # n-gram : 연이어 사용된 n개의 단어
-# 엔씨
 # install.packages("igraph")
 library(igraph)
 

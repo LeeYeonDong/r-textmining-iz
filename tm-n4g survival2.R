@@ -88,6 +88,7 @@ n4g$종류 <- n4g$종류 %>% as.integer()
 
 n4g$id <- c(1:length(n4g$제목))
 
+# 관심도 0-1 변환
 n4g$관심도 %>% quantile(probs = seq(0,1, by = 0.025))
 n4g$관심도over <- ifelse(n4g$관심도 > 240,1,0) # quantile에 따라 구분구간 조정 85%
 
@@ -112,18 +113,24 @@ n4g <- n4g %>% na.omit()
 n4g$생존기간 <- n4g$생존기간 + 1
 n4g$생존기간 %>% boxplot()
 # n4g <- n4g[-which(n4g$생존기간 > summary(n4g$생존기간)[5] + 3*IQR(n4g$생존기간)),]
-n4g$생존기간 %>% sort(decreasing = TRUE)
+n4g$생존기간 %>% sort(decreasing = F)
+
 n4g <- n4g %>% 
   filter(n4g$생존기간 < 60)
+
 
 
 # data:stanford2과 비교
 # stan$id -> n4g$id / stan$time -> n4g$(게시글 시점-마지막 댓글 게시 시점점) / stan$mismatch -> n4g$이름 / stan$age -> n4g$날짜 / stan$status -> n4g$관심도 / 
 
 # K-M model (참고)
+n4g <- n4g %>% na.omit()
+n4g %>% view()
+write.csv(n4g, "D:/대학원/논문/소논문/텍스트마이닝 생존분석/n4g.csv", row.names = FALSE, fileEncoding = 'cp949')
+
 n4g_KM <- survfit(
-  Surv(time = n4g$생존기간,
-       event = n4g$관심도over) ~ n4g$이름, data = n4g, type="kaplan-meier") 
+  Surv(time = 생존기간,
+       event = 관심도over) ~ 이름, data = n4g, type="kaplan-meier") 
 
 n4g_KM %>% summary()
 
@@ -137,9 +144,9 @@ survdiff(
 n4g_cox1 <- coxph(
   Surv(생존기간, 관심도over) ~ 이름, data = n4g)
 
-ggforest(n4g_cox1)
-
 n4g_cox1 %>% summary()
+
+ggforest(n4g_cox1, data = n4g)
 
 
 n4g_new <- n4g %>% 
@@ -182,7 +189,7 @@ ggcoxdiagnostics(n4g_cox1, type = "deviance", linear.predictions = TRUE)
 ggcoxdiagnostics(n4g_cox2, type = "martingale", linear.predictions = TRUE)
 ggcoxdiagnostics(n4g_cox2, type = "deviance", linear.predictions = TRUE)
 
-ggcoxfunctional(Surv(생존기간, 관심도over) ~ 이름, data = n4g)
+ggcoxfunctional(Surv(생존기간) ~ 관심도+이름, data = n4g)
 
 # 비교적 잔차가 고르게 분포한다 = 선형성이 있다
 

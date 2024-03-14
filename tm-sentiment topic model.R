@@ -12,10 +12,11 @@ library(topicmodels)
 library(tidytext)
 library(tidyverse)
 library(remotes)
+library(devtools)
 install_github("EmilHvitfeldt/textdata")
 
 ## data
-df_ytb1 <- read_csv(file = "D:/대학원/논문/커뮤니케이션학과/유튜브.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
+df_ytb1 <- read_csv(file = "D:/대학원/상담/커뮤니케이션학과/유튜브.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
 
 df_ytb1 %>% head(100)
 
