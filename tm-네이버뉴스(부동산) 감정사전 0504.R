@@ -32,10 +32,29 @@ library(tidygraph)
 start.time <- Sys.time()
 
 # 데이터 로드
-re_df <- read_csv(file = "D:/대학원/논문/소논문/부동산_토픽모델링/부동산_수정_df.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
+re_df <- read_csv(file = "D:/대학원/논문/소논문/부동산_감정사전/부동산_본문_추가_df.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
 
-re_df100 <- re_df
-re_df <- re_df100
+
+# 데이터 전처리
+# 텍스트 전처리 함수 정의
+preprocess_text <- function(text) {
+  # 특수기호로 둘러싸인 텍스트 제거
+  text <- str_replace_all(text, "\\[.*?\\]", "")  # 대괄호 안의 텍스트 제거
+  text <- str_replace_all(text, "\\(.*?\\)", "")  # 괄호 안의 텍스트 제거
+  text <- str_replace_all(text, "\\{.*?\\}", "")  # 중괄호 안의 텍스트 제거
+  text <- str_replace_all(text, "<.*?>", "")      # <> 태그 안의 텍스트 제거
+  
+  # 이메일, URL, 숫자 등 제거
+  text <- str_replace_all(text, "\\S*@\\S*\\s?", "")  # 이메일 주소 제거
+  text <- str_replace_all(text, "http\\S+", "")       # URL 제거
+  text <- str_replace_all(text, "\\d+", "")           # 숫자 제거
+  
+  # 공백 정리
+  text <- str_replace_all(text, "\\s+", " ")          # 여러 공백을 하나의 공백으로 변경
+  text <- str_trim(text)                              # 양쪽 공백 제거
+  return(text)
+}
+
 
 re_df$id <- c(1:nrow(re_df))
 re_df %>% str()
@@ -56,7 +75,7 @@ for (i in 1:n){
   
   re_df_tb[[i]] <- re_df_sp[[i]] %>% 
     tibble() %>% 
-    unnest_tokens(input = 제목, output = word, token = "words", drop = FALSE)
+    unnest_tokens(input = 본문, output = word, token = "words", drop = FALSE)
   
   re_df_한글[[i]] <- re_df_tb[[i]] %>%  
     mutate(한글 = str_match(word,'([가-힣]+)')[,2]) %>% ## "한글" variable을 만들고 한글만 저장
@@ -162,7 +181,7 @@ re_sen_token_df <- re_sen_token_df %>%
 # openxlsx 패키지 로드
 library(openxlsx)
 # 데이터 프레임을 엑셀 파일로 저장
-write.xlsx(re_sen_token_df, file = "D:/대학원/논문/소논문/부동산_감정사전/re_df.xlsx")
+write.xlsx(re_sen_token_df, file = "D:/대학원/논문/소논문/부동산_감정사전/lexicon_0504.xlsx")
 
 names(re_sen_df)[6] <- "sen_pol"
 

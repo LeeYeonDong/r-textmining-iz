@@ -32,10 +32,32 @@ library(tidygraph)
 start.time <- Sys.time()
 
 # 데이터 로드
-re_df <- read_csv(file = "D:/대학원/논문/소논문/부동산_토픽모델링/부동산_수정_df.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
+re_df <- read_csv(file = "D:/대학원/논문/소논문/부동산_감정사전/부동산_본문_추가_df.csv", col_names = TRUE, locale=locale('ko',encoding='utf-8'))
 
-re_df100 <- re_df
-re_df <- re_df100
+# 데이터 전처리
+preprocess_text <- function(text) {
+  # Removing text within brackets
+  text <- gsub("\\[.*?\\]", "", text)
+  text <- gsub("\\(.*?\\)", "", text)
+  text <- gsub("\\{.*?\\}", "", text)
+  text <- gsub("<.*?>", "", text)
+  
+  # Removing emails, URLs, and numbers
+  text <- gsub("\\S*@\\S*\\s?", "", text)
+  text <- gsub("http\\S+", "", text)
+  text <- gsub("\\d+", "", text)
+  
+  # Cleaning up whitespace
+  text <- gsub("\\s+", " ", text)
+  text <- trimws(text)
+  return(text)
+}
+
+# Applying the preprocess_text to '제목' and '본문' columns
+re_df <- re_df %>%
+  mutate(제목 = sapply(제목, preprocess_text),
+         본문 = sapply(본문, preprocess_text))
+
 
 re_df$id <- c(1:nrow(re_df))
 re_df %>% str()
@@ -55,7 +77,7 @@ for (i in 1:n){
   cat(i, '번째 데이터 리스트 tokenizer', '중 입니다.\n') 
   
   re_df_tb[[i]] <- re_df_sp[[i]] %>% 
-    tibble() %>% 
+    as.data.frame() %>%
     unnest_tokens(input = 제목, output = word, token = "words", drop = FALSE)
   
   re_df_한글[[i]] <- re_df_tb[[i]] %>%  
@@ -73,7 +95,7 @@ for (i in 1:n){
 }
 
 re_df_token <- re_df_token %>% 
-  select(-c("한글"))
+  select(-c("한글")) %>% as.tibble()
 
 
 # 불용어 - 반복 작업 필요
@@ -82,21 +104,23 @@ stopwords_kor <- read_csv(file = "D:/대학원/textmining/Doit/stopwords_kor.csv
 stopwords_kor
 
 chr <- stopwords_kor$stopwords_kor
+chr %>% head()
 
 제거 <- c()
 
-for(i in 1:length(chr)){
-  
-  cat(i, '번째 전처리 제거 단어를 찾는 중 입니다.\n') 
-  
-  del.tmp <- grep(chr[i], re_df_token$word)
-  제거 <- append(제거,del.tmp)
+# 제거할 인덱스를 찾는 함수
+find_indices <- function(word, data) {
+  grep(word, data)
 }
 
-re_df_token <- re_df_token[-제거,]
-re_df_token %>% head(1000) %>% view()
+# 각 단어에 대해 find_indices 함수 적용
+indices_list <- lapply(chr, find_indices, data = re_df_token$word)
 
-re_df_token$word %>% table() %>% sort(decreasing = TRUE) %>% head(100)
+# 모든 인덱스를 하나의 벡터로 결합
+indices_to_remove <- unique(unlist(indices_list))
+
+# 제거할 인덱스 사용하여 데이터 프레임에서 해당 행 제거
+re_df_token <- re_df_token[-indices_to_remove, ]
 
 
 
@@ -162,11 +186,11 @@ re_sen_token_df <- re_sen_token_df %>%
 # openxlsx 패키지 로드
 library(openxlsx)
 # 데이터 프레임을 엑셀 파일로 저장
-write.xlsx(re_sen_token_df, file = "D:/대학원/논문/소논문/부동산_감정사전/re_df.xlsx")
+write.xlsx(re_sen_token_df, file = "D:/대학원/논문/소논문/부동산_감정사전/lexicon_token_0505.xlsx")
 
 names(re_sen_df)[6] <- "sen_pol"
 
-write.csv(re_sen_df, file = "D:/대학원/논문/소논문/부동산_감정사전/re_df.csv", row.names=FALSE, fileEncoding = 'cp949')
+write.csv(re_sen_df, file = "D:/대학원/논문/소논문/부동산_감정사전/lexicon_0505.csv", row.names=FALSE, fileEncoding = 'cp949')
 
 
 # bi-lstm sentimental score
