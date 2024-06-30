@@ -12,7 +12,9 @@ plan(multicore) # parallel processing within a single machine
 library(tm) # Framework for text mining
 library(tidyverse) # Data preparation and pipes %>%
 library(ggplot2) # For plotting word frequencies
-library(wordcloud2) # Wordclouds!
+library(devtools)
+# devtools::install_github("lchiffon/wordcloud2") # 기존 wordcloud2 패키지 제거
+library(wordcloud2)
 library(Rtsne)
 library(rsvd)
 library(geometry)

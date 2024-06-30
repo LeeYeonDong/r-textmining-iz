@@ -1,5 +1,7 @@
 library(tidyverse)
 library(lubridate)
+install.packages("philentropy")
+library(philentropy)
 
 # 데이터 불러오기
 df1 <- read_csv(file = "D:/대학원/논문/소논문/부동산_토픽모델링/topics_over_time0525.csv", 
@@ -64,21 +66,30 @@ df1_freq_df.tmp <- df1 %>% filter(Topic == topic[i]) %>% group_by(Timestamp) %>%
 
 df2_meanprc_df.tmp <- df0630 %>% filter(sig_nm == sig_nm_uni[j])
 
-corr.tmp <- cor(df1_freq_df.tmp$total, df2_meanprc_df.tmp$meanprc)
+merged_df.tmp <- merge(df1_freq_df.tmp, df2_meanprc_df.tmp, by = "Timestamp")
+
+# total과 meanprc를 확률 분포로 변환
+total_dist.tmp <- merged_df.tmp$total / sum(merged_df.tmp$total)
+meanprc_dist.tmp <- merged_df.tmp$meanprc / sum(merged_df.tmp$meanprc)
+
+# philentropy 패키지를 사용하려면 두 분포를 행렬 형식으로 제공해야 합니다.
+dist_matrix.tmp <- rbind(total_dist.tmp, meanprc_dist.tmp)
+kl.tmp <- distance(dist_matrix.tmp, method = "kullback-leibler")
+
 
 topic_vec <- append(topic_vec,topic[i])
 sig_nm_vec <- append(sig_nm_vec,sig_nm_uni[j])
-corr_vec <- append(corr_vec,corr.tmp)
+kl_vec <- append(kl_vec,kl.tmp)
 
-cat("현재", topic[i], "th topic의,", sig_nm_uni[j],"의 correlation을 구하고 있음\n")
+cat("현재", topic[i], "th topic의,", sig_nm_uni[j],"의 kl-divergence을 구하고 있음\n")
 
 }
 }
 
-cor_df <- tibble(topic_vec, sig_nm_vec, corr_vec)
-cor_df %>% arrange(corr_vec)
-cor_df %>% arrange(-corr_vec)
+kl_df <- tibble(topic_vec, sig_nm_vec, kl_vec)
+kl_df %>% arrange(kl_vec)
+kl_df %>% arrange(-kl_vec)
 
-write.csv(cor_df, file = "D:/대학원/논문/소논문/부동산_토픽모델링/cor_df0510.csv", row.names=FALSE, fileEncoding = 'cp949')
+write.csv(kl_df, file = "D:/대학원/논문/소논문/부동산_토픽모델링/kl_df630.csv", row.names=FALSE, fileEncoding = 'cp949')
 
   
