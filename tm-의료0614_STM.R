@@ -32,7 +32,6 @@ library(reshape2)
 library(tidytext)
 library(lubridate)
 
-## 쿠팡
 # 데이터 불러오기 및 전처리(Preprocessing)
 # Load the readxl library
 library(readxl)
@@ -99,63 +98,83 @@ yt_df_raw$id <- c(1:nrow(yt_df_raw))
 # dd <- read_csv("D:/대학원/상담/커뮤니케이션학과/의료분쟁/df_ytb_com0605.csv",locale = locale("ko", encoding = "UTF-8")) 
 # write.csv(dd, "D:/대학원/상담/커뮤니케이션학과/의료분쟁/df_ytb_com0605.csv", row.names = FALSE, fileEncoding = 'cp949')
 
-# 데이터 프레임을 100행씩 쪼개기
-yt_df <- yt_df_raw  %>%
-  mutate(group = (row_number() - 1) %/% 100) %>%
-  group_split(group)
+# # 데이터 프레임을 100행씩 쪼개기
+# yt_df <- yt_df_raw  %>%
+#   mutate(group = (row_number() - 1) %/% 100) %>%
+#   group_split(group)
+# 
+# yt_df[[1]]
+# 
+# yt_df_pos <- tibble()
 
-yt_df[[1]]
 
-yt_df_pos <- tibble()
+# # 명사와 형용사만 추출하는 함수 정의
+# extract_nouns_adjectives <- function(text) {
+#   # SimplePos09를 사용하여 형태소 분석 수행
+#   pos_result <- SimplePos09(text)
+#   # 명사(N)와 형용사(PA)를 추출
+#   word <- unlist(str_extract_all(pos_result, "[가-힣]+/N|[가-힣]+/PA"))
+#   # 품사 태그 제거
+#   word <- str_remove_all(word, "/[A-Z]+")
+#   return(word)
+# }
 
 
-# 명사와 형용사만 추출하는 함수 정의
-extract_nouns_adjectives <- function(text) {
-  # SimplePos09를 사용하여 형태소 분석 수행
-  pos_result <- SimplePos09(text)
-  # 명사(N)와 형용사(PA)를 추출
-  word <- unlist(str_extract_all(pos_result, "[가-힣]+/N|[가-힣]+/PA"))
-  # 품사 태그 제거
-  word <- str_remove_all(word, "/[A-Z]+")
-  return(word)
-}
+# 조사 패턴 정의
+josa_patterns <- c("이", "가", "은", "는", "을", "를", "에", "의", "로", "와", "과", "도", "만", "부터", "까지", "에서", "으로", "라고", "랑", "이랑", "하고")
 
-# 조사 리스트 (일부 조사는 문자열의 마지막에 등장할 때가 많음)
-josa_patterns <- c("은$", "는$", "이$", "가$", "을$", "를$", "에$", "와$", "과$", "도$", "로$", "으로$", "의$", "께$")
-
-# 조사 제거 함수 정의
+# remove_josa 함수 정의
 remove_josa <- function(text, patterns) {
   for (pattern in patterns) {
-    text <- str_remove(text, pattern)
+    text <- str_remove(text, paste0(pattern, "$"))
   }
   return(text)
 }
 
-i = 1
+yt_df_pos <- tibble()
 
-for(i in 1:length(yt_df)){
-  tryCatch({
-    # SimplePos22 함수 적용
-    yt_df_tmp <- yt_df[[i]] %>%
-      select(id, 본문, 날짜)
-    
-    yt_df_pos_tmp <- yt_df_tmp %>%
-      rowwise() %>%
-      mutate(word = list(extract_nouns_adjectives(본문))) %>%
-      unnest(word) %>%
-      mutate(word = remove_josa(word, josa_patterns)) %>% 
-      filter(str_length(word) >= 2) 
-    
-    yt_df_combined_tmp <- yt_df_tmp %>%
-      left_join(yt_df_pos_tmp, by = c("id", "본문" ,"날짜"))
-    
-    yt_df_pos <- bind_rows(yt_df_pos, yt_df_combined_tmp)
-    
-    cat(i, "th 리스트 작업 완료\n")
-  }, error = function(e) {
-    message("Error in processing chunk ", i, ": ", e)
-  })
+
+# 텍스트 전처리 함수 정의
+preprocess_text <- function(text) {
+  text <- str_replace_all(text, "[^가-힣0-9a-zA-Z\\s]", "")  # 특수 문자 제거
+  text <- str_squish(text)  # 연속된 공백 제거
+  return(text)
 }
+
+# 전체 데이터 프레임에 대해 처리 함수 정의
+process_data <- function(df) {
+  df %>%
+    mutate(본문 = preprocess_text(본문)) %>%  # 텍스트 전처리
+    rowwise() %>%
+    mutate(word = list(SimplePos09(본문))) %>%
+    unnest(word) %>%
+    rowwise() %>%
+    mutate(word = str_split(word, "\\+")) %>%
+    unnest(word) %>% 
+    filter(str_detect(word, "/N") | str_detect(word, "/PA")) %>% 
+    mutate(word = str_remove(word, "/.*")) %>%
+    ungroup() %>% 
+    filter(str_length(word) >= 2) %>%
+    mutate(word = sapply(word, remove_josa, patterns = josa_patterns)) %>%
+    mutate(word = as.character(word))  # Ensure 'word' is always a character
+}
+
+# 전체 데이터 프레임에 대해 처리 적용
+yt_df_pos <- tryCatch({
+  process_data(yt_df_raw)
+}, error = function(e) {
+  message("Error in processing data: ", e)
+  return(tibble())  # 빈 데이터프레임 반환
+})
+
+# results_yt <- results_yt[!sapply(results_yt, is.null)]
+# 
+# # 결과를 하나의 데이터프레임으로 병합
+# yt_df_pos <- bind_rows(results_yt)
+# 
+test <- yt_df_pos$id %>% unique() %>% tail(1)
+
+yt_df_pos %>% filter(id == (test-1)) %>% view()
 
 yt_df_pos %>% glimpse()
 
@@ -281,7 +300,7 @@ yt_processed_out <- prepDocuments(
   yt_processed$documents, 
   yt_processed$vocab, 
   yt_processed$meta, 
-  lower.thresh = n_thr # 최소 20회 이상 등장하는 단어만 사용
+  lower.thresh = n_thr # 최소 5회 이상 등장하는 단어만 사용
 )
 
 # docs_removed <- yt_processed_out$docs.removed
@@ -383,7 +402,7 @@ beta_tidy %>%
 
 # 문서-토픽 매트릭스 (감마 값)
 gamma_tidy <- tidy(stm_model, matrix = "gamma")
-top_gamma_df <- cp_df %>%
+top_gamma_df <- yt_df %>%
   inner_join(gamma_tidy, by = c("id" = "document")) %>% 
   group_by(topic) %>%
   slice_max(order_by = gamma, n = 3) %>%
@@ -393,12 +412,13 @@ write.csv(top_gamma_df, "D:/대학원/상담/커뮤니케이션학과/의료분�
 
 
 # 토픽 간 상관관계 그래프
+dev.off()
 topic_corr <- topicCorr(stm_model)
 plot(topic_corr)
 
 
 # 토픽 비율 히스토그램 (랜덤하게 선택한 주제 1부터 15개)
-plot(stm_model, type = "hist", topics = sample(1:K_optimal, size = 10))
+plot(stm_model, type = "hist", topics = sample(1:yt_K_optimal, size = 10))
 
 # 모델 요약
 plot(stm_model, type = "summary",  n = 5)

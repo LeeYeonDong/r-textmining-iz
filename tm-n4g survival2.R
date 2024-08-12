@@ -2,6 +2,8 @@ library(tidyverse)
 library(survival)
 library(GGally)
 library(survminer)
+library(dplyr)
+library(lubridate)
 
 
 # 데이터 불러오기
@@ -18,16 +20,11 @@ n4g_mc <- read_csv(file = "D:/대학원/논문/소논문/텍스트마이닝 생�
                    locale=locale("ko",encoding="UTF-8"))
 
 
-# 이름 삽입
-# n4g_ds$이름 <- c("1")
-# n4g_lol$이름 <- c("2")
-# n4g_lou$이름 <- c("3")
-# n4g_mc$이름 <- c("4")
-
-n4g_ds$이름 <- c("ds")
-n4g_lol$이름 <- c("lol")
-n4g_lou$이름 <- c("lou")
-n4g_mc$이름 <- c("mc")
+# game_type 삽입
+n4g_ds$game_type <- c("dark souls")
+n4g_lol$game_type <- c("the league of legend")
+n4g_lou$game_type <- c("the last of us")
+n4g_mc$game_type <- c("minecraft")
 
 # 데이터 프레임 병합
 n4g <- bind_rows(n4g_ds,n4g_lol,n4g_lou,n4g_mc)
@@ -39,7 +36,7 @@ n4g %>% dim()
 
 # 데이터 확인
 n4g %>% str()
-n4g$이름 <- n4g$이름 %>% as.factor()
+n4g$game_type <- n4g$game_type %>% as.factor()
 
 # 데이터 전처리
 n4g$관심도 <- str_match(n4g$관심도,"\\d+")
@@ -118,10 +115,36 @@ n4g$생존기간 %>% sort(decreasing = F)
 n4g <- n4g %>% 
   filter(n4g$생존기간 < 60)
 
+n4g %>% glimpse()
+
+# 게임별 기사 추세
+# 날짜 변수를 적절한 날짜 형식으로 변환 (예시로 숫자형 날짜를 현재 날짜 기준으로 변환)
+n4g <- n4g %>%
+  mutate(Timestamp = as.Date("2022-07-31") - days(날짜)) %>% mutate(YearMonth = format(Timestamp, "%Y-%m"))
+
+# # 각 game_type에 대한 색상 지정
+# game_type_colors <- c(
+#   "dark souls" = "#E41A1C",
+#   "minecraft" = "#4DAF4A",
+#   "the last of us" = "#377EB8",
+#   "the league of legend" = "#984EA3"
+# )
+
+n4g %>%
+  group_by(YearMonth, game_type) %>%
+  summarise(Frequency = n()) %>%
+  ungroup() %>% 
+  ggplot(aes(x = YearMonth, y = Frequency, color = game_type, group = game_type)) +
+  geom_line(size = 1) +
+  labs(x = "Timestamp",
+       y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 5), legend.position = "bottom") +
+  guides(color = guide_legend(title = NULL))
 
 
 # data:stanford2과 비교
-# stan$id -> n4g$id / stan$time -> n4g$(게시글 시점-마지막 댓글 게시 시점점) / stan$mismatch -> n4g$이름 / stan$age -> n4g$날짜 / stan$status -> n4g$관심도 / 
+# stan$id -> n4g$id / stan$time -> n4g$(게시글 시점-마지막 댓글 게시 시점점) / stan$mismatch -> n4g$game_type / stan$age -> n4g$날짜 / stan$status -> n4g$관심도 / 
 
 # K-M model (참고)
 n4g <- n4g %>% na.omit()
@@ -130,19 +153,22 @@ write.csv(n4g, "D:/대학원/논문/소논문/텍스트마이닝 생존분석/n4
 
 n4g_KM <- survfit(
   Surv(time = 생존기간,
-       event = 관심도over) ~ 이름, data = n4g, type="kaplan-meier") 
+       event = 관심도over) ~ game_type, data = n4g, type="kaplan-meier") 
 
 n4g_KM %>% summary()
 
-n4g_KM %>% ggsurvplot(conf.int = TRUE, surv.median.line = "hv", pval = FALSE, pval.method = FALSE)
+n4g_KM %>% ggsurvplot(conf.int = TRUE, 
+                      surv.median.line = "hv", 
+                      pval = FALSE, 
+                      pval.method = FALSE)
 
 survdiff(
   Surv(time = n4g$생존기간,
-       event = n4g$관심도over) ~ n4g$이름, data = n4g) # 4그룹간 로그 순위 검정
+       event = n4g$관심도over) ~ n4g$game_type, data = n4g) # 4그룹간 로그 순위 검정
 
 # Cox Proportional Hazard model
 n4g_cox1 <- coxph(
-  Surv(생존기간, 관심도over) ~ 이름, data = n4g)
+  Surv(생존기간, 관심도over) ~ game_type, data = n4g)
 
 n4g_cox1 %>% summary()
 
@@ -150,20 +176,20 @@ ggforest(n4g_cox1, data = n4g)
 
 
 n4g_new <- n4g %>% 
-  filter(이름 %in% c("ds","lol","lou"))
-n4g_new$이름 <- n4g_new$이름 %>% as.character()
-n4g_new$이름 <- n4g_new$이름 %>% as.factor()
-n4g_new$이름 %>% str()
+  filter(game_type %in% c("ds","lol","lou"))
+n4g_new$game_type <- n4g_new$game_type %>% as.character()
+n4g_new$game_type <- n4g_new$game_type %>% as.factor()
+n4g_new$game_type %>% str()
 
 n4g_cox2 <- coxph(
-  Surv(n4g_new$생존기간, n4g_new$관심도over) ~ 이름, data = n4g_new)
+  Surv(n4g_new$생존기간, n4g_new$관심도over) ~ game_type, data = n4g_new)
 
 ggforest(n4g_cox2)
 
 n4g_cox2 %>% summary()
 
 # n4g_cox2 <- coxph(
-#   Surv(생존기간, 관심도over) ~ 이름 + 날짜, data = n4g)
+#   Surv(생존기간, 관심도over) ~ game_type + 날짜, data = n4g)
 # 
 # n4g_cox2 %>% summary()
 # 
@@ -176,7 +202,7 @@ n4g_cox2 %>% summary()
 
 # plot
 # plot(survfit(n4g_cox1),xlab="time", ylab="Survival Rate", conf.int=FALSE, col=1:4)
-# legend("topright", legend=c(1,2,3,4), lty = 1, col = 1:4, text.col = 1:4, title = '이름')
+# legend("topright", legend=c(1,2,3,4), lty = 1, col = 1:4, text.col = 1:4, title = 'game_type')
 
 
 # check linearity (for the model that used num X's) using MARTINGALE residuals 
@@ -189,7 +215,7 @@ ggcoxdiagnostics(n4g_cox1, type = "deviance", linear.predictions = TRUE)
 ggcoxdiagnostics(n4g_cox2, type = "martingale", linear.predictions = TRUE)
 ggcoxdiagnostics(n4g_cox2, type = "deviance", linear.predictions = TRUE)
 
-ggcoxfunctional(Surv(생존기간) ~ 관심도+이름, data = n4g)
+ggcoxfunctional(Surv(생존기간) ~ 관심도+game_type, data = n4g)
 
 # 비교적 잔차가 고르게 분포한다 = 선형성이 있다
 
@@ -215,7 +241,7 @@ plot(cox.zph(n4g_cox1)[1])
 abline(h=0, col=2)
 # case[1] : y=0(red line)이 confidense interval에 상당히 포함 되어있지 않으므로 Hazard ratio가 변한다고 볼수 있다
 
-plot(cox.zph(n4g_cox2)[1]) # 이름별
+plot(cox.zph(n4g_cox2)[1]) # game_type별
 abline(h=0, col=2)
 plot(cox.zph(n4g_cox2)[2]) # 날짜별
 abline(h=0, col=2)
@@ -233,6 +259,6 @@ bcos$treatment %>% class()
 bcos$right %>% class()
 
 n4g_cox1 <- coxph(
-  Surv(생존기간, 관심도over) ~ 이름, data = n4g)
+  Surv(생존기간, 관심도over) ~ game_type, data = n4g)
 
 MIICD.coxph(formula = ~ treatment, k = 5, m = 5, data = bcos, verbose = FALSE) 

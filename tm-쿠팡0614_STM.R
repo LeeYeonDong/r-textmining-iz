@@ -41,6 +41,13 @@ cp_df_raw <- read_csv("D:/대학원/상담/커뮤니케이션학과/쇼핑몰/tb
   as.data.frame() %>% 
   as_tibble()
 
+cp_df_raw %>%
+  group_by(keyword) %>%
+  summarise(
+    상품수 = n_distinct(상품명),
+    상품평갯수 = n()
+  ) %>% print(n = 30)
+
 cp_df_raw %>% tail()
 
 cp_df_raw$날짜 <- as.Date(cp_df_raw$날짜, format = "%Y.%m.%d")
@@ -49,72 +56,87 @@ cp_df_raw$상품명 %>% glimpse()
 
 cp_df_raw$category1 %>% unique()
 
-# id 부여
-cp_df_raw$id <- c(1:nrow(cp_df_raw))
+# # id 부여
+# cp_df_raw$id <- c(1:nrow(cp_df_raw))
+# 
+# # 데이터 프레임을 100행씩 쪼개기
+# cp_df <- cp_df_raw  %>%
+#   mutate(group = (row_number() - 1) %/% 100) %>%
+#   group_split(group)
+# 
+# cp_df[[1]]
+# 
+# category1 <- cp_df_raw %>% 
+#   select(category1) %>% 
+#   unique() %>% unlist() %>% as.vector()
 
-# 데이터 프레임을 100행씩 쪼개기
-cp_df <- cp_df_raw  %>%
-  mutate(group = (row_number() - 1) %/% 100) %>%
-  group_split(group)
+# # 명사와 형용사만 추출하는 함수 정의
+# extract_nouns_adjectives <- function(text) {
+#   # SimplePos09를 사용하여 형태소 분석 수행
+#   pos_result <- SimplePos09(text)
+#   # 명사(N)와 형용사(PA)를 추출
+#   word <- unlist(str_extract_all(pos_result, "[가-힣]+/N|[가-힣]+/PA"))
+#   # 품사 태그 제거
+#   word <- str_remove_all(word, "/[A-Z]+")
+#   return(word)
+# }
 
-cp_df[[1]]
+# 조사 패턴 정의
+josa_patterns <- c("이", "가", "은", "는", "을", "를", "에", "의", "로", "와", "과", "도", "만", "부터", "까지", "에서", "으로", "라고", "랑", "이랑", "하고")
 
-category1 <- cp_df_raw %>% 
-  select(category1) %>% 
-  unique() %>% unlist() %>% as.vector()
-
-cp_df_pos <- tibble()
-
-
-# 명사와 형용사만 추출하는 함수 정의
-extract_nouns_adjectives <- function(text) {
-  # SimplePos09를 사용하여 형태소 분석 수행
-  pos_result <- SimplePos09(text)
-  # 명사(N)와 형용사(PA)를 추출
-  word <- unlist(str_extract_all(pos_result, "[가-힣]+/N|[가-힣]+/PA"))
-  # 품사 태그 제거
-  word <- str_remove_all(word, "/[A-Z]+")
-  return(word)
-}
-
-# 조사 리스트 (일부 조사는 문자열의 마지막에 등장할 때가 많음)
-josa_patterns <- c("은$", "는$", "이$", "가$", "을$", "를$", "에$", "와$", "과$", "도$", "로$", "으로$", "의$", "께$")
-
-# 조사 제거 함수 정의
+# remove_josa 함수 정의
 remove_josa <- function(text, patterns) {
   for (pattern in patterns) {
-    text <- str_remove(text, pattern)
+    text <- str_remove(text, paste0(pattern, "$"))
   }
   return(text)
 }
 
-i = 1
+cp_df_pos <- tibble()
 
-for(i in 1:length(cp_df)){
-  tryCatch({
-    # SimplePos22 함수 적용
-    cp_df_tmp <- cp_df[[i]] %>%
-      select(id, 본문, category1, 날짜)
 
-    cp_df_pos_tmp <- cp_df_tmp %>%
-      rowwise() %>%
-      mutate(word = list(extract_nouns_adjectives(본문))) %>%
-      unnest(word) %>%
-      mutate(word = remove_josa(word, josa_patterns)) %>% 
-      filter(str_length(word) >= 2) 
-    
-    cp_df_combined_tmp <- cp_df_tmp %>%
-      left_join(cp_df_pos_tmp, by = c("id", "본문","category1", "날짜"))
-    
-    cp_df_pos <- bind_rows(cp_df_pos, cp_df_combined_tmp)
-    
-    cat(i, "th 리스트 작업 완료\n")
-  }, error = function(e) {
-    message("Error in processing chunk ", i, ": ", e)
-  })
+# 텍스트 전처리 함수 정의
+preprocess_text <- function(text) {
+  text <- str_replace_all(text, "[^가-힣0-9a-zA-Z\\s]", "")  # 특수 문자 제거
+  text <- str_squish(text)  # 연속된 공백 제거
+  return(text)
 }
 
-cp_df_pos %>% glimpse()
+# 전체 데이터 프레임에 대해 처리 함수 정의
+process_data <- function(df) {
+  df %>%
+    mutate(본문 = preprocess_text(본문)) %>%  # 텍스트 전처리
+    rowwise() %>%
+    mutate(word = list(SimplePos09(본문))) %>%
+    unnest(word) %>%
+    rowwise() %>%
+    mutate(word = str_split(word, "\\+")) %>%
+    unnest(word) %>% 
+    filter(str_detect(word, "/N") | str_detect(word, "/PA")) %>% 
+    mutate(word = str_remove(word, "/.*")) %>%
+    ungroup() %>% 
+    filter(str_length(word) >= 2) %>%
+    mutate(word = sapply(word, remove_josa, patterns = josa_patterns)) %>%
+    mutate(word = as.character(word))  # Ensure 'word' is always a character
+}
+
+# 전체 데이터 프레임에 대해 처리 적용
+cp_df_pos <- tryCatch({
+  process_data(cp_df_raw)
+}, error = function(e) {
+  message("Error in processing data: ", e)
+  return(tibble())  # 빈 데이터프레임 반환
+})
+
+# results_yt <- results_yt[!sapply(results_yt, is.null)]
+# 
+# # 결과를 하나의 데이터프레임으로 병합
+# yt_df_pos <- bind_rows(results_yt)
+# 
+test <- cp_df_pos$id %>% unique() %>% tail(1)
+
+cp_df_pos %>% filter(id == (test-1)) %>% view()
+
 
 # tf_idf
 # 'id'를 문서 ID로 사용하고 'word'를 단어로 사용합니다.

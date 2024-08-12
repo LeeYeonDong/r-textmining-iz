@@ -18,7 +18,7 @@ write_xlsx(df1, "D:/대학원/논문/소논문/부동산_토픽모델링/topics_
 #                 locale=locale("ko",encoding="utf-8"))
 
 df0630 <- read.csv(
-  file = "D:/대학원/논문/소논문/부동산_토픽모델링/yeondong_rst0630.csv",
+  file = "D:/대학원/논문/소논문/부동산_토픽모델링/yeondong_rst0630_01.csv",
   header = TRUE,
   sep = ",",
   colClasses = c(
@@ -210,6 +210,9 @@ ggplot(combined_df, aes(x = Timestamp, y = Value, group = Type)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4),
         legend.position = "none")
 
+
+
+
 # 단어별 추세
 # 두 데이터 프레임을 하나로 합치기
 # 월별 전체 기사제목 중에서 "부동산"을 포함한 기제사목의 비율 # 갈 수록 기사제목에 "부동산"을 포함한 비율이 낮아질까?
@@ -227,7 +230,7 @@ df1 %>%
               mutate(Type = sig_nm, Value = meanprc_norm) %>%
               select(Timestamp, Type, Value)) %>% 
   ggplot(aes(x = Timestamp, y = Value, color = Type, group = Type)) +
-  geom_line(data = . %>% filter(Type == "Frequency"), linetype = "longdash", size = 1, color = "grey") +
+  geom_line(data = . %>% filter(Type == "Frequency"), linetype = "longdash", size = 0.5, color = "grey") +
   geom_line(data = . %>% filter(Type != "Frequency"), linetype = "solid", size = 1, color = "black") +
   labs(title = "Frequency '서울' and price Trends",
        x = "Timestamp",
@@ -317,10 +320,9 @@ df_word <- df1 %>%
 combined_df <- bind_rows(df1_g_long, df0630_long) %>% 
   bind_rows(df_word)
 
-# 그래프 그리기
+# 그래프 그리기 토픽-아파트 실거래 가격 지수
 combined_df %>% 
   ggplot(aes(x = Timestamp, y = Frequency_norm, color = Type, group = Type)) +
-  geom_line(size = 0.5) +
   scale_color_manual(values = color_values) +
   labs(title = "Combined Topic and Sig_nm Trends",
        x = "Timestamp",
@@ -331,10 +333,48 @@ combined_df %>%
         legend.position = "none",
         legend.title = element_text(size = 6),  # 범례 제목 글자 크기 줄이기
         legend.text = element_text(size = 6)) +  # 범례 
-geom_line(data = subset(combined_df, Type %in% c("Topic_0")), size = 1, color = "darkgreen") + # 토픽 빈도
-  geom_line(data = subset(combined_df, Type %in% c("서울")), size = 1, color = "red") + # 지역
-  geom_line(data = subset(combined_df, Type == "Frequency"), aes(y = Value), size = 1, color = "orange")  # 특정 단어
+  geom_line(data = subset(combined_df, str_detect(Type, "^Topic")), linetype = "twodash", size = 0.5, color = "grey") + # "Topic"으로 시작하는 모든 경우 + # 토픽 빈도
+  geom_line(data = subset(combined_df, Type %in% c("서울", "도심권", "동북권", "서북권", "서남권", "동남권")), size = 1, color = "black")  # 지역
 
+# 그래프 그리기
+combined_df %>% 
+  ggplot(aes(x = Timestamp, y = Frequency_norm, color = Type, group = Type)) +
+  scale_color_manual(values = color_values) +
+  labs(title = "Combined Topic ,Sig_nm, '서울' Trends",
+       x = "Timestamp",
+       y = "Normalized Values",
+       color = "Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4),  # 글자 크기 줄이기
+        legend.position = "none",
+        legend.title = element_text(size = 6),  # 범례 제목 글자 크기 줄이기
+        legend.text = element_text(size = 6)) +  # 범례 
+  geom_line(data = subset(combined_df, Type %in% c("Topic_0")), size = 0.5, color = "darkgreen") + # 토픽 빈도
+  geom_line(data = subset(combined_df, Type %in% c("서울", "도심권", "동북권", "서북권", "서남권", "동남권")), size = 1) + # 지역
+  geom_line(data = subset(combined_df, Type %in% c("Topic_14")), size = 0.5, color = "orange") + # 특정 단어
+  annotate("text", x = "2015-06", y = 0.8, label = "KL : 0.046", color = "darkgreen", size = 7, hjust = 0) +
+  annotate("text", x = "2018-01", y = 0.1, label = "KL : 1.022", color = "orange", size = 7, hjust = 0)
+
+
+# 그래프 그리기
+combined_df %>% 
+  ggplot(aes(x = Timestamp, y = Frequency_norm, color = Type, group = Type)) +
+  scale_color_manual(values = color_values) +
+  labs(title = "Combined Topic ,Sig_nm, '서울' Trends",
+       x = "Timestamp",
+       y = "Normalized Values",
+       color = "Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4),  # 글자 크기 줄이기
+        legend.position = "none",
+        legend.title = element_text(size = 6),  # 범례 제목 글자 크기 줄이기
+        legend.text = element_text(size = 6)) +  # 범례 
+geom_line(data = subset(combined_df, Type %in% c("Topic_0")), linetype = "twodash", size = 0.5, color = "darkgreen") + # 토픽 빈도
+  geom_line(data = subset(combined_df, Type %in% c("서울", "도심권", "동북권", "서북권", "서남권", "동남권")), size = 1, color = "black") + # 지역
+  geom_line(data = subset(combined_df, Type == "Frequency"), aes(y = Value), size = 0.5, color = "orange") + # 특정 단어
+  annotate("text", x = "2013-01", y = 0.9, label = "Topic 0", color = "darkgreen", size = 3, hjust = 0) +
+  annotate("text", x = "2020-01", y = 0, label = "Seoul", color = "orange", size = 3, hjust = 0)
+  
 # topic 0 - 부동산:정반대 / 아파트:정반대 / 분양:정반대 / 시장:X / 서울:부합
 # topic 2 - 쌍용:X / 쓸이:X / 씨티:약 부합(선행) / 싸움:X / 싸게:X
 # topic 3 - etf:X / 증시:약 정반대 / 美中:X / ipo:X / 지표:정반대
@@ -346,32 +386,68 @@ geom_line(data = subset(combined_df, Type %in% c("Topic_0")), size = 1, color = 
 # 특정 단어 빈도와 아파트 실거래 가격지수 KL-divergence
 topic
 sig_nm_uni
+topicwords_df <- representative_words %>%
+  separate_rows(Words, sep = ", ")
 
 i = 1
 j = 1
 
+pr <- c()
+topicword <- c()
+tp <- c()
+
+topic_house_word_df <- tibble()
+
 # 예시 
-df1_freq_df.tmp <- df1 %>% filter(Topic == topic[1]) %>% group_by(Timestamp) %>% summarise(total = sum(Frequency, na.rm = TRUE)) # topic - 서울이 속한 topic0
+for (i in 1:nrow(topicwords_df)) {
+  for (j in 1:length(sig_nm_uni)) {
+    
+    df1_freq_df.tmp <- df1 %>% 
+      filter(Topic == topicwords_df$Topic[i]) %>% 
+      group_by(Timestamp) %>% 
+      summarise(total = sum(Frequency, na.rm = TRUE)) # topic - 서울이 속한 topic0
+    
+    df2_meanprc_df.tmp <- df0630 %>% 
+      filter(sig_nm == sig_nm_uni[j]) # 아파트 실거래 지수 - 지역:서울
+    
+    df1_word_df.tmp <- df1 %>% # 특정단어 "서울"
+      filter(Topic == topicwords_df$Topic[i]) %>% 
+      group_by(Timestamp) %>% 
+      filter(str_detect(Words, topicwords_df$Words[i])) %>% # "word" detect
+      group_by(Timestamp) %>%
+      summarise(Frequency = sum(Frequency))
+    # 특정 단어 빈도 # 수정!!!!!!!!
+    
+    merged_df.tmp <- merge(df1_freq_df.tmp, df2_meanprc_df.tmp, by = "Timestamp") %>% 
+      merge(df1_word_df.tmp, by = "Timestamp")
+    
+    # total과 meanprc를 확률 분포로 변환
+    total_dist.tmp <- merged_df.tmp$total / sum(merged_df.tmp$total) # topic
+    meanprc_dist.tmp <- merged_df.tmp$meanprc / sum(merged_df.tmp$meanprc) # 아파트 실거래 지수
+    Frequency_dist.tmp <- merged_df.tmp$Frequency / sum(merged_df.tmp$Frequency) # 특정 단어 빈도
+    
+    # topic-아파트 실거래 KL
+    topic_house_kl.tmp <- rbind(total_dist.tmp, meanprc_dist.tmp) %>% 
+      distance(method = "kullback-leibler")
+    
+    # 단어빈도-아파트 실거래 KL
+    word_house_kl.tmp <- rbind(Frequency_dist.tmp, meanprc_dist.tmp) %>%  
+      distance(method = "kullback-leibler")
+    
+    pr.tmp <- sig_nm_uni[j]
+    topicword.tmp <- topicwords_df$Words[i]
+    topic.tmp <- topicwords_df$Topic[i]
+    
+    topic_house_word_df.tmp <- tibble(topic.tmp, pr.tmp, topicword.tmp, topic_house_kl.tmp, word_house_kl.tmp)
+    
+    topic_house_word_df <- bind_rows(topic_house_word_df, topic_house_word_df.tmp)
+    
+  }
+}
 
-df2_meanprc_df.tmp <- df0630 %>% filter(sig_nm == sig_nm_uni[7]) # 아파트 실거래 지수 - 지역:서울
 
-df1_word_df.tmp <- df1 %>% # 특정단어 "서울"
-  filter(str_detect(Words, "서울")) %>% # "word" detect
-  group_by(Timestamp) %>%
-  summarise(Frequency = sum(Frequency))
-# 특정 단어 빈도
+names(topic_house_word_df) <- c("토픽","지역", "토픽_단어", "topic_house_kl", "word_house_kl", "kl_diff")
+  
+topic_house_word_df$kl_diff <- topic_house_word_df$topic_house_kl - topic_house_word_df$word_house_kl
 
-merged_df.tmp <- merge(df1_freq_df.tmp, df2_meanprc_df.tmp, by = "Timestamp") %>% merge(df1_word_df.tmp, by = "Timestamp")
-
-# total과 meanprc를 확률 분포로 변환
-total_dist.tmp <- merged_df.tmp$total / sum(merged_df.tmp$total) # topic
-meanprc_dist.tmp <- merged_df.tmp$meanprc / sum(merged_df.tmp$meanprc) # 아파트 실거래 지수
-Frequency_dist.tmp <- merged_df.tmp$Frequency / sum(merged_df.tmp$Frequency) # 특정 단어 빈도
-
-# topic-아파트 실거래 KL
-rbind(total_dist.tmp, meanprc_dist.tmp) %>% 
-  distance(method = "kullback-leibler")
-
-# 단어빈도-아파트 실거래 KL
-rbind(Frequency_dist.tmp, meanprc_dist.tmp) %>%  
-  distance( method = "kullback-leibler")
+write.csv(topic_house_word_df, file = "D:/대학원/논문/소논문/부동산_토픽모델링/topic_house_word_df_kl.csv", row.names=FALSE, fileEncoding = 'cp949')
