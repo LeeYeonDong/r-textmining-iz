@@ -2,6 +2,10 @@
 ### 데이터 불러오기
 ## 문재인 대통령 연설문 불러오기
 library(KoNLP)
+buildDictionary(ext_dic = "woorimalsam")  # "woorimalsam" dic을 불러옵니다
+useNIADic() 
+# Use the Sejong Dictionary
+useSejongDic()
 library(dplyr)
 library(tibble)
 library(tidyverse)
