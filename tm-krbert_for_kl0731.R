@@ -103,8 +103,8 @@ df0630 <- df0630 %>%
   group_by(sig_nm) %>%
   mutate(meanprc_norm = rescale(meanprc))
 
-# 색상 설정
-color_values <- c("기사 빈도" = "black", "광주" = "orange", "대구" = "darkgreen", "부산" = "blue", "울산" = "purple", "대전" = "brown", "서울" = "cyan", "인천" = "pink", "word" = "black")
+# 선 모양 설정
+linetype_values <- c("기사 빈도" = "solid", "광주" = "dotted", "대구" = "dashed", "부산" = "dotdash", "울산" = "twodash", "대전" = "longdash", "서울" = "solid", "인천" = "twodash")
 
 # 기사별 빈도
 df_token %>%
@@ -113,17 +113,46 @@ df_token %>%
   mutate(value = rescale(value)) %>%
   mutate(Type = "기사 빈도") %>%
   bind_rows(df0630 %>%
-  mutate(Type = sig_nm, value = meanprc_norm) %>%
-  ungroup() %>% select(Timestamp, value, Type)) %>%
+              mutate(Type = sig_nm, value = meanprc_norm) %>%
+              ungroup() %>% select(Timestamp, value, Type)) %>%
+  ggplot(aes(x = Timestamp, y = value, group = Type, linetype = Type)) +
+  geom_line(data = . %>% filter(Type == "기사 빈도"), 
+            color = "black", size = 1.5) +  # 기사 빈도 선을 두껍게
+  geom_line(data = . %>% filter(Type != "기사 빈도"), 
+            color = "grey", size = 1) +  # 나머지 선은 회색
+  scale_linetype_manual(values = linetype_values) +  # 각 지역에 대해 linetype 적용
+  labs(x = "Timestamp",
+       y = "Normalized Values",
+       color = "Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4),
+        legend.position = "bottom")
+
+
+# 기사 빈도만 검은색 나머지는 회색
+# 기사별 빈도
+df_token %>%
+  group_by(Timestamp) %>%
+  summarise(value = n()) %>%
+  mutate(value = rescale(value)) %>%
+  mutate(Type = "기사 빈도") %>%
+  bind_rows(df0630 %>%
+              mutate(Type = sig_nm, value = meanprc_norm) %>%
+              ungroup() %>% select(Timestamp, value, Type)) %>%
   ggplot(aes(x = Timestamp, y = value, color = Type, group = Type)) +
-  geom_line(linetype = "solid", size = 1) +
+  # 기사 빈도는 굵은 검은색
+  geom_line(data = . %>% filter(Type == "기사 빈도"), color = "black", size = 1.5, linetype = "solid") +
+  # 나머지 변수들은 흐린 회색 실선
+  geom_line(data = . %>% filter(Type != "기사 빈도"), color = "gray", size = 0.75, linetype = "solid") +
   scale_color_manual(values = color_values, guide = guide_legend(title = "Type")) +
   labs(title = "Article Frequency and price Trends",
        x = "Timestamp",
        y = "Normalized Values",
        color = "Type") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4), legend.position = "bottom")
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4), 
+        legend.position = "bottom")
+
 
 
 # 기사빈도와 아파트 실거래 가격지수 KL-divergence
@@ -185,24 +214,55 @@ print(article_house_kl_df)
 # 5     4 쌍용, 쓸이, 싸움    
 df_token %>% glimpse()
 
-df_token %>%
-  filter(str_detect(제목, "부동산")) %>% # "word" detect
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(stringr)
+
+# "부동산" 빈도 계산 및 정규화
+df_budongsan <- df_token %>%
+  filter(str_detect(제목, "부동산")) %>%
   group_by(Timestamp) %>%
   summarise(value = n()) %>%
   mutate(value = rescale(value)) %>%
-  mutate(Type = "word") %>%
-  bind_rows(df0630 %>%
-  mutate(Type = sig_nm, value = meanprc_norm) %>%
-  ungroup() %>% select(Timestamp, value, Type)) %>%
-  ggplot(aes(x = Timestamp, y = value, color = Type, group = Type)) +
-  geom_line(linetype = "solid", size = 1) +
-  scale_color_manual(values = color_values, guide = guide_legend(title = "Type")) +
-  labs(title = "Article Frequency and price Trends",
-       x = "Timestamp",
+  mutate(Type = "부동산")
+
+# "GDP" 빈도 계산 및 정규화
+df_gdp <- df_token %>%
+  filter(str_detect(제목, "GDP")) %>%
+  group_by(Timestamp) %>%
+  summarise(value = n()) %>%
+  mutate(value = rescale(value)) %>%
+  mutate(Type = "GDP")
+
+# "서울"의 meanprc 정규화
+df_seoul <- df0630 %>%
+  filter(sig_nm == "서울") %>%
+  mutate(Type = "서울", value = rescale(meanprc)) %>%
+  select(Timestamp, value, Type)
+
+# "대전"의 meanprc 정규화
+df_daejeon <- df0630 %>%
+  filter(sig_nm == "대전") %>%
+  mutate(Type = "대전", value = rescale(meanprc)) %>%
+  select(Timestamp, value, Type)
+
+# 데이터 결합
+combined_df <- bind_rows(df_budongsan, df_gdp, df_seoul, df_daejeon)
+
+# 꺾은선 그래프 그리기
+ggplot(combined_df, aes(x = Timestamp, y = value, color = Type, linetype = Type, group = Type)) +
+  geom_line(size = 1) +  # 한 번에 모든 데이터를 그리도록 수정
+  scale_linetype_manual(values = c("서울" = "solid", "부동산" = "dashed", "대전" = "solid", "GDP" = "dotted")) +  # 선 모양 설정
+  scale_color_manual(values = c("서울" = "black", "부동산" = "black", "대전" = "grey", "GDP" = "grey")) +  # 색 설정
+  labs(x = "Timestamp",
        y = "Normalized Values",
-       color = "Type") +
+       color = "Type",
+       linetype = "Type") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4), legend.position = "bottom")
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 4), legend.position = "bottom") +
+  guides(color = guide_legend(title = "Type"), linetype = guide_legend(title = "Type"))
+
 
 
 # 특정 단어 빈도와 아파트 실거래 가격지수 KL-divergence
